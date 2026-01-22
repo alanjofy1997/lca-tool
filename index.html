@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LCA Product Selector</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f4f8fb;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: linear-gradient(90deg, #0077cc, #00aaff);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 30px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+
+    .filter-group label {
+      font-weight: 600;
+      color: #0077cc;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .results {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+
+    h3 {
+      color: #0077cc;
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background: #eaf4ff;
+    }
+
+    .chart-container {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  LCA Product Selector(Lindner Metal Ceilings) – Environmental Impact Viewer
+</header>
+
+<div class="container">
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>Produktfamilie</label>
+      <select id="familie"></select>
+    </div>
+
+    <div class="filter-group">
+      <label>Produkttyp</label>
+      <select id="typ"></select>
+    </div>
+
+    <div class="filter-group">
+      <label>Gewicht</label>
+      <select id="gewicht"></select>
+    </div>
+  </div>
+
+  <div class="results" id="resultTable"></div>
+
+  <div class="chart-container">
+    <h3>Impact Comparison Chart</h3>
+    <canvas id="impactChart"></canvas>
+  </div>
+
+</div>
+
+<footer>
+  LCA Visualization Tool • Recycling & Reuse Scenario Comparison
+</footer>
+
+<script>
+let data = [];
+let weightKey = null;
+let chart = null;
+
+fetch("products.csv")
+  .then(response => response.text())
+  .then(csv => {
+    const separator = csv.split("\n")[0].includes(";") ? ";" : ",";
+    const rows = csv.trim().split("\n").map(r => r.split(separator));
+    const headers = rows.shift().map(h => h.trim());
+
+    weightKey = headers.find(h => h.toLowerCase().includes("gewicht"));
+    if (!weightKey) {
+      alert("Gewicht column not found!");
+      return;
+    }
+
+    data = rows.map(row => {
+      let obj = {};
+      headers.forEach((h, i) => obj[h] = row[i]?.replace("\r", "").trim());
+      return obj;
+    });
+
+    initFamilie();
+  });
+
+function normalizeWeight(w) {
+  return String(w).replace(",", ".").trim();
+}
+
+function initFamilie() {
+  const select = document.getElementById("familie");
+  const values = [...new Set(data.map(d => d.Produktfamilie).filter(Boolean))];
+  select.innerHTML = "<option value=''>Select</option>";
+  values.forEach(v => select.innerHTML += `<option>${v}</option>`);
+  select.onchange = initTyp;
+}
+
+function initTyp() {
+  const familie = document.getElementById("familie").value;
+  const select = document.getElementById("typ");
+
+  const values = [...new Set(
+    data.filter(d => d.Produktfamilie === familie)
+        .map(d => d.Produkttyp)
+        .filter(Boolean)
+  )];
+
+  select.innerHTML = "<option value=''>Select</option>";
+  values.forEach(v => select.innerHTML += `<option>${v}</option>`);
+  select.onchange = initGewicht;
+}
+
+function initGewicht() {
+  const familie = document.getElementById("familie").value;
+  const typ = document.getElementById("typ").value;
+  const select = document.getElementById("gewicht");
+
+  const values = [...new Set(
+    data.filter(d => d.Produktfamilie === familie && d.Produkttyp === typ)
+        .map(d => normalizeWeight(d[weightKey]))
+        .filter(v => v)
+  )];
+
+  select.innerHTML = "<option value=''>Select</option>";
+  values.forEach(v => select.innerHTML += `<option>${v}</option>`);
+  select.onchange = showResult;
+}
+
+function showResult() {
+  const familie = document.getElementById("familie").value;
+  const typ = document.getElementById("typ").value;
+  const gewicht = document.getElementById("gewicht").value;
+
+  const product = data.find(d =>
+    d.Produktfamilie === familie &&
+    d.Produkttyp === typ &&
+    normalizeWeight(d[weightKey]) === gewicht
+  );
+
+  if (!product) return;
+
+  const recycling = ["A1-A3", "A4", "A5", "C1", "C2", "C3", "C4", "D"];
+  const reuse = ["A1-A3", "A4", "A5", "C1", "C2/1", "C3/1", "C4/1", "D/1"];
+
+  let html = "<h3>♻️ Recycling Scenario</h3><table><tr>";
+  recycling.forEach(c => html += `<th>${c}</th>`);
+  html += "</tr><tr>";
+  recycling.forEach(c => html += `<td>${product[c] ?? "-"}</td>`);
+  html += "</tr></table>";
+
+  html += "<h3>🔁 Reuse Scenario</h3><table><tr>";
+  reuse.forEach(c => html += `<th>${c}</th>`);
+  html += "</tr><tr>";
+  reuse.forEach(c => html += `<td>${product[c] ?? "-"}</td>`);
+  html += "</tr></table>";
+
+  document.getElementById("resultTable").innerHTML = html;
+
+  renderChart(product, recycling, reuse);
+}
+
+function renderChart(product, recycling, reuse) {
+  const labels = recycling;
+  const recData = recycling.map(k => parseFloat(product[k]) || 0);
+  const reuseData = reuse.map(k => parseFloat(product[k]) || 0);
+
+  const ctx = document.getElementById("impactChart").getContext("2d");
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Recycling",
+          data: recData,
+          backgroundColor: "#0077cc"
+        },
+        {
+          label: "Reuse",
+          data: reuseData,
+          backgroundColor: "#00aaff"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+</script>
+
+</body>
+</html>
