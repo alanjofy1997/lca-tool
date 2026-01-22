@@ -1,277 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>LCA Product Selector</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: #f4f8fb;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background: linear-gradient(90deg, #0077cc, #00aaff);
-      color: white;
-      padding: 20px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: auto;
-      padding: 30px;
-    }
-
-    .filters {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      margin-bottom: 30px;
-    }
-
-    .filter-group label {
-      font-weight: 600;
-      color: #0077cc;
-    }
-
-    select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-
-    .results {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      margin-bottom: 30px;
-    }
-
-    h3 {
-      color: #0077cc;
-      margin-top: 20px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-      text-align: center;
-    }
-
-    th {
-      background: #eaf4ff;
-    }
-
-    .chart-container {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      color: #777;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>LCA Product Selector – KPI Version</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {font-family:"Segoe UI",sans-serif;background:#f4f8fb;margin:0}
+header {background:linear-gradient(90deg,#0077cc,#00aaff);color:white;padding:20px;text-align:center;font-size:22px;font-weight:bold}
+.container {max-width:1100px;margin:auto;padding:30px}
+.filters {display:grid;grid-template-columns:repeat(3,1fr);gap:20px;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.filter-group label {font-weight:600;color:#0077cc}
+select {width:100%;padding:10px;border-radius:8px;border:1px solid #ccc}
+#duBox {display:none;background:linear-gradient(90deg,#0077cc,#00aaff);color:white;padding:18px;border-radius:10px;font-size:18px;font-weight:600;margin:20px 0;text-align:center}
+.results,.chart-container,.summary-container {background:white;padding:25px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);margin-bottom:25px}
+h3 {color:#0077cc}
+table {width:100%;border-collapse:collapse}
+th,td {padding:10px;border-bottom:1px solid #ddd;text-align:center}
+th {background:#eaf4ff}
+footer{text-align:center;padding:20px;color:#777}
+</style>
 </head>
 <body>
 
-<header>
-  LCA Product Selector(Lindner Metal Ceilings) – Environmental Impact Viewer
-</header>
+<header>LCA Product Selector – KPI Dashboard</header>
 
 <div class="container">
 
-  <div class="filters">
-    <div class="filter-group">
-      <label>Produktfamilie</label>
-      <select id="familie"></select>
-    </div>
+<div class="filters">
+  <div class="filter-group"><label>Produktfamilie</label><select id="familie"></select></div>
+  <div class="filter-group"><label>Produkttyp</label><select id="typ"></select></div>
+  <div class="filter-group"><label>Gewicht</label><select id="gewicht"></select></div>
+</div>
 
-    <div class="filter-group">
-      <label>Produkttyp</label>
-      <select id="typ"></select>
-    </div>
+<div id="duBox"></div>
 
-    <div class="filter-group">
-      <label>Gewicht</label>
-      <select id="gewicht"></select>
+<div class="results" id="resultTable"></div>
+
+<!-- KPI Summary -->
+<div class="summary-container" id="kpiBox" style="display:none;">
+  <h3>A1–C4 Scenario Summary</h3>
+  <div style="display:flex;justify-content:space-around;margin-top:15px;">
+    <div style="text-align:center">
+      <div style="color:#0077cc">♻ Recycling</div>
+      <div id="kpiRec" style="font-size:22px;font-weight:bold"></div>
+      <small>kg CO₂e/m²</small>
+    </div>
+    <div style="text-align:center">
+      <div style="color:#00aaff">🔁 Reuse</div>
+      <div id="kpiReuse" style="font-size:22px;font-weight:bold"></div>
+      <small>kg CO₂e/m²</small>
     </div>
   </div>
+</div>
 
-  <div class="results" id="resultTable"></div>
-
-  <div class="chart-container">
-    <h3>Impact Comparison Chart</h3>
-    <canvas id="impactChart"></canvas>
-  </div>
+<div class="chart-container">
+  <h3>Module Comparison (A1–D)</h3>
+  <canvas id="impactChart"></canvas>
+</div>
 
 </div>
 
-<footer>
-  LCA Visualization Tool • Recycling & Reuse Scenario Comparison
-</footer>
+<footer>LCA Visualization Tool</footer>
 
 <script>
-let data = [];
-let weightKey = null;
-let chart = null;
+let data=[], weightKey=null, chart=null;
 
-fetch("products.csv")
-  .then(response => response.text())
-  .then(csv => {
-    const separator = csv.split("\n")[0].includes(";") ? ";" : ",";
-    const rows = csv.trim().split("\n").map(r => r.split(separator));
-    const headers = rows.shift().map(h => h.trim());
-
-    weightKey = headers.find(h => h.toLowerCase().includes("gewicht"));
-    if (!weightKey) {
-      alert("Gewicht column not found!");
-      return;
-    }
-
-    data = rows.map(row => {
-      let obj = {};
-      headers.forEach((h, i) => obj[h] = row[i]?.replace("\r", "").trim());
-      return obj;
-    });
-
-    initFamilie();
+fetch("products.csv").then(r=>r.text()).then(csv=>{
+  const sep = csv.split("\n")[0].includes(";")?";":",";
+  const rows = csv.trim().split("\n").map(r=>r.split(sep));
+  const headers = rows.shift().map(h=>h.trim());
+  weightKey = headers.find(h=>h.toLowerCase().includes("gewicht"));
+  data = rows.map(r=>{
+    let o={}; headers.forEach((h,i)=>o[h]=r[i]?.trim()); return o;
   });
+  initFamilie();
+});
 
-function normalizeWeight(w) {
-  return String(w).replace(",", ".").trim();
+const norm=w=>String(w).replace(",",".").trim();
+
+function initFamilie(){
+  const s=document.getElementById("familie");
+  [...new Set(data.map(d=>d.Produktfamilie))].forEach(v=>s.innerHTML+=`<option>${v}</option>`);
+  s.onchange=initTyp;
 }
-
-function initFamilie() {
-  const select = document.getElementById("familie");
-  const values = [...new Set(data.map(d => d.Produktfamilie).filter(Boolean))];
-  select.innerHTML = "<option value=''>Select</option>";
-  values.forEach(v => select.innerHTML += `<option>${v}</option>`);
-  select.onchange = initTyp;
+function initTyp(){
+  const f=familie.value, s=typ;
+  s.innerHTML="<option></option>";
+  [...new Set(data.filter(d=>d.Produktfamilie===f).map(d=>d.Produkttyp))]
+    .forEach(v=>s.innerHTML+=`<option>${v}</option>`);
+  s.onchange=initGewicht;
 }
-
-function initTyp() {
-  const familie = document.getElementById("familie").value;
-  const select = document.getElementById("typ");
-
-  const values = [...new Set(
-    data.filter(d => d.Produktfamilie === familie)
-        .map(d => d.Produkttyp)
-        .filter(Boolean)
-  )];
-
-  select.innerHTML = "<option value=''>Select</option>";
-  values.forEach(v => select.innerHTML += `<option>${v}</option>`);
-  select.onchange = initGewicht;
+function initGewicht(){
+  const f=familie.value,t=typ.value,s=gewicht;
+  s.innerHTML="<option></option>";
+  [...new Set(data.filter(d=>d.Produktfamilie===f&&d.Produkttyp===t).map(d=>norm(d[weightKey])))]
+    .forEach(v=>s.innerHTML+=`<option>${v}</option>`);
+  s.onchange=showResult;
 }
+function showResult(){
+  const p=data.find(d=>d.Produktfamilie===familie.value&&d.Produkttyp===typ.value&&norm(d[weightKey])===gewicht.value);
+  if(!p)return;
+  duBox.style.display="block";
+  duBox.innerText=`DU: ${gewicht.value} kg/m²`;
 
-function initGewicht() {
-  const familie = document.getElementById("familie").value;
-  const typ = document.getElementById("typ").value;
-  const select = document.getElementById("gewicht");
+  const rec=["A1-A3","A4","A5","C1","C2","C3","C4","D"];
+  const reuse=["A1-A3","A4","A5","C1","C2/1","C3/1","C4/1","D/1"];
 
-  const values = [...new Set(
-    data.filter(d => d.Produktfamilie === familie && d.Produkttyp === typ)
-        .map(d => normalizeWeight(d[weightKey]))
-        .filter(v => v)
-  )];
+  resultTable.innerHTML=`<h3>♻ Recycling</h3>`+mkTable(rec,p)+`<h3>🔁 Reuse</h3>`+mkTable(reuse,p);
 
-  select.innerHTML = "<option value=''>Select</option>";
-  values.forEach(v => select.innerHTML += `<option>${v}</option>`);
-  select.onchange = showResult;
+  const recData=rec.map(k=>+p[k]||0);
+  const reuseData=reuse.map(k=>+p[k]||0);
+  const sumRec=recData.slice(0,7).reduce((a,b)=>a+b,0);
+  const sumReuse=reuseData.slice(0,7).reduce((a,b)=>a+b,0);
+
+  kpiBox.style.display="block";
+  kpiRec.innerText=sumRec.toFixed(2);
+  kpiReuse.innerText=sumReuse.toFixed(2);
+
+  drawChart(rec,recData,reuseData);
 }
-
-function showResult() {
-  const familie = document.getElementById("familie").value;
-  const typ = document.getElementById("typ").value;
-  const gewicht = document.getElementById("gewicht").value;
-
-  const product = data.find(d =>
-    d.Produktfamilie === familie &&
-    d.Produkttyp === typ &&
-    normalizeWeight(d[weightKey]) === gewicht
-  );
-
-  if (!product) return;
-
-  const recycling = ["A1-A3", "A4", "A5", "C1", "C2", "C3", "C4", "D"];
-  const reuse = ["A1-A3", "A4", "A5", "C1", "C2/1", "C3/1", "C4/1", "D/1"];
-
-  let html = "<h3>♻️ Recycling Scenario</h3><table><tr>";
-  recycling.forEach(c => html += `<th>${c}</th>`);
-  html += "</tr><tr>";
-  recycling.forEach(c => html += `<td>${product[c] ?? "-"}</td>`);
-  html += "</tr></table>";
-
-  html += "<h3>🔁 Reuse Scenario</h3><table><tr>";
-  reuse.forEach(c => html += `<th>${c}</th>`);
-  html += "</tr><tr>";
-  reuse.forEach(c => html += `<td>${product[c] ?? "-"}</td>`);
-  html += "</tr></table>";
-
-  document.getElementById("resultTable").innerHTML = html;
-
-  renderChart(product, recycling, reuse);
+function mkTable(keys,p){
+  return `<table><tr>${keys.map(k=>`<th>${k}</th>`).join("")}</tr><tr>${keys.map(k=>`<td>${p[k]||"-"}</td>`).join("")}</tr></table>`;
 }
-
-function renderChart(product, recycling, reuse) {
-  const labels = recycling;
-  const recData = recycling.map(k => parseFloat(product[k]) || 0);
-  const reuseData = reuse.map(k => parseFloat(product[k]) || 0);
-
-  const ctx = document.getElementById("impactChart").getContext("2d");
-  if (chart) chart.destroy();
-
-  chart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: "Recycling",
-          data: recData,
-          backgroundColor: "#0077cc"
-        },
-        {
-          label: "Reuse",
-          data: reuseData,
-          backgroundColor: "#00aaff"
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
+function drawChart(labels,recData,reuseData){
+  if(chart)chart.destroy();
+  chart=new Chart(impactChart,{
+    type:"bar",
+    data:{labels,datasets:[
+      {label:"Recycling",data:recData,backgroundColor:"#0077cc"},
+      {label:"Reuse",data:reuseData,backgroundColor:"#00aaff"}]},
+    options:{responsive:true,scales:{y:{beginAtZero:true}}}
   });
 }
 </script>
-
 </body>
 </html>
