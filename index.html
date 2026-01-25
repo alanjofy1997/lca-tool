@@ -12,6 +12,9 @@ header {background:linear-gradient(90deg,#0077cc,#00aaff);color:white;padding:20
 .filter-group label {font-weight:600;color:#0077cc}
 select {width:100%;padding:10px;border-radius:8px;border:1px solid #ccc}
 #duBox {display:none;background:linear-gradient(90deg,#0077cc,#00aaff);color:white;padding:18px;border-radius:10px;font-size:18px;font-weight:600;margin:20px 0;text-align:center}
+#linkBox {display:none;text-align:center;margin-bottom:20px}
+.linkBtn {display:inline-block;margin:10px;padding:12px 20px;background:#0077cc;color:white;text-decoration:none;border-radius:8px;font-weight:600}
+.linkBtn.epd {background:#00aaff}
 .results,.chart-container,.summary-container {background:white;padding:25px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);margin-bottom:25px}
 h3 {color:#0077cc}
 table {width:100%;border-collapse:collapse}
@@ -33,6 +36,14 @@ footer{text-align:center;padding:20px;color:#777}
 </div>
 
 <div id="duBox"></div>
+
+<!-- Product & EPD Links -->
+<div id="linkBox">
+  <a href="https://my.lindner-group.com/content/page/68248e8c5c2d7b047f006c46"
+     target="_blank" class="linkBtn">🔗 More Product Information</a>
+  <a href="https://epd-online.com/PublishedEpd/Detail?id=21971"
+     target="_blank" class="linkBtn epd">📄 View EPD</a>
+</div>
 
 <div class="results" id="resultTable"></div>
 
@@ -80,6 +91,7 @@ const norm=w=>String(w).replace(",",".").trim();
 
 function initFamilie(){
   const s=document.getElementById("familie");
+  s.innerHTML="<option></option>";
   [...new Set(data.map(d=>d.Produktfamilie))].forEach(v=>s.innerHTML+=`<option>${v}</option>`);
   s.onchange=initTyp;
 }
@@ -100,8 +112,11 @@ function initGewicht(){
 function showResult(){
   const p=data.find(d=>d.Produktfamilie===familie.value&&d.Produkttyp===typ.value&&norm(d[weightKey])===gewicht.value);
   if(!p)return;
+
   duBox.style.display="block";
   duBox.innerText=`DU: ${gewicht.value} kg/m²`;
+
+  linkBox.style.display="block";
 
   const rec=["A1-A3","A4","A5","C1","C2","C3","C4","D"];
   const reuse=["A1-A3","A4","A5","C1","C2/1","C3/1","C4/1","D/1"];
@@ -120,7 +135,8 @@ function showResult(){
   drawChart(rec,recData,reuseData);
 }
 function mkTable(keys,p){
-  return `<table><tr>${keys.map(k=>`<th>${k}</th>`).join("")}</tr><tr>${keys.map(k=>`<td>${p[k]||"-"}</td>`).join("")}</tr></table>`;
+  return `<table><tr>${keys.map(k=>`<th>${k}</th>`).join("")}</tr>
+          <tr>${keys.map(k=>`<td>${p[k]||"-"}</td>`).join("")}</tr></table>`;
 }
 function drawChart(labels,recData,reuseData){
   if(chart)chart.destroy();
